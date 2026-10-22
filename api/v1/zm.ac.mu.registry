@@ -1,0 +1,13 @@
+src/main/java/zm/ac/mu/registry/\
+   RegistryApplication.java
+   controller/  AuthController, CredentialController, RevocationController, VerifyController, AuditController
+   dto/         LoginRequest, CredentialRequest, CredentialResponse, PageResponse,
+                RevocationRequest, RevocationResponse, ShareLinkRequest, shareLinkResponse,
+                VerficationResponse, AuditEventResponse
+   service/     AuthService, CredentialService, RevocationService, ShareLinkService,
+                VerficationService, AuditService
+   service/stub/StubRegistryService
+   exception/   NotFoundException, ConflictException, ForbiddenOperationException,
+                FieldProblem, ApiExceptionHandler
+src/main/resources/application.properties
+src/test/java/zm/ac/mu/registry/CredentialControllerTest.java
