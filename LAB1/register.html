@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semester Registration · School of ICT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @import url("style.css");
+    </style>
+</head>
+
+<body>
+
+    <!-- TASKBAR -->
+    <nav class="taskbar">
+        <div class="brand">
+            <span class="mark">School of ICT</span>
+            <span class="tag">Semester Registration</span>
+        </div>
+        <div class="task-nav">
+            <button class="task-btn active" id="navRegister" onclick="showRegistration()">Registration</button>
+            <button class="task-btn" id="navCourses" onclick="openOverlay('coursesOverlay')">My Courses</button>
+            <button class="task-btn" id="navStudent" onclick="openOverlay('studentOverlay')">Student ID</button>
+        </div>
+    </nav>
+
+    <!-- CONFIRMATION BANNER -->
+    <div class="banner" id="banner">
+        <div class="banner-inner">
+            <span class="banner-icon">&#10003;</span>
+            <span class="banner-text" id="bannerText">Registration confirmed.</span>
+            <button class="banner-close" onclick="hideBanner()" aria-label="Dismiss">&times;</button>
+        </div>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div class="page" id="registrationPage">
+        <div class="intro">
+            <div>
+                <h1>Choose your courses</h1>
+                <p>Select up to six ICT courses for the 2026/2027 second semester. Review your selection in the summary panel, then confirm to complete registration.</p>
+            </div>
+            <span class="term-pill">2026/2027 · Semester 2</span>
+        </div>
+
+        <div class="content-grid">
+            <!-- COURSE LIST -->
+            <div class="course-list" id="courseList">
+                <!-- populated by JS -->
+            </div>
+
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <div class="summary-card">
+                    <h2>Your selection</h2>
+                    <div class="count-row"><span class="num" id="selCount">0</span><span class="of">of 6 courses</span></div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <ul class="selected-list" id="selectedList">
+                        <li class="empty">No courses selected yet</li>
+                    </ul>
+                    <p class="limit-note" id="limitNote"></p>
+                    <button class="confirm-btn" id="confirmBtn" disabled onclick="openConfirmOverlay()">Confirm registration</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- CONFIRM-SELECTION OVERLAY -->
+    <div class="overlay" id="confirmOverlay">
+        <div class="overlay-panel">
+            <button class="overlay-close" onclick="closeOverlay('confirmOverlay')" aria-label="Close">&times;</button>
+            <div class="overlay-eyebrow">Review &amp; confirm</div>
+            <h2>Are you sure about these courses?</h2>
+            <p>Once confirmed, this becomes your registered course list for the semester.</p>
+            <ul class="confirm-course-list" id="confirmList"></ul>
+            <div class="overlay-actions">
+                <button class="btn btn-ghost" onclick="closeOverlay('confirmOverlay')">Go back</button>
+                <button class="btn btn-gold" onclick="finalizeRegistration()">Yes, register me</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REGISTERED-COURSES OVERLAY -->
+    <div class="overlay" id="coursesOverlay">
+        <div class="overlay-panel">
+            <button class="overlay-close" onclick="closeOverlay('coursesOverlay')" aria-label="Close">&times;</button>
+            <div class="overlay-eyebrow">My courses</div>
+            <h2>Registered courses</h2>
+            <div id="registeredCoursesBody"></div>
+        </div>
+    </div>
+
+    <!-- STUDENT ID OVERLAY -->
+    <div class="overlay" id="studentOverlay">
+        <div class="overlay-panel">
+            <button class="overlay-close" onclick="closeOverlay('studentOverlay')" aria-label="Close">&times;</button>
+            <div class="overlay-eyebrow">Student ID</div>
+            <div class="id-card">
+                <div class="school">School of ICT &middot; 2026/2027</div>
+                <div class="name">Gift Chitalu</div>
+                <div class="num">Student No. 202308731</div>
+                <div class="status-line" id="statusLine">
+                    <span class="status-dot unreg" id="statusDot"></span>
+                    <span id="statusText">Not yet registered for this semester</span>
+                </div>
+            </div>
+            <p class="status-note" id="statusNote">Select your courses from the Registration tab, then confirm to complete registration.</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
