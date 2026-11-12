@@ -1,0 +1,436 @@
+openapi: 3.1.0                     
+info:
+  title: Credential Registry API    
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - cookieAuth: []
+
+paths:
+  /auth/login:
+    post:
+      summary: Log in (sets JWT cookie)
+      security: []                  
+      requestBody:
+        required: true              
+        content:
+          application/json: 
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in, cookie set
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized' 
+
+  /credentials:
+    post:
+      summary: Issue a credential (Registrar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialRequest'
+      responses:
+        '201':                      
+          description: Credential created
+          headers:
+            Location:         
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'    
+    get:
+      summary: List credentials with filter, search, pagination (Registrar, Auditor)
+      parameters: 
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - name: q                   
+          in: query
+          schema:
+            type: string
+        - name: status             
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, REVOKED]
+      responses:
+        '200':
+          description: A page of credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /credentials/{id}:                
+    get:
+      summary: Get one credential (Registrar, or the owning Graduate)
+      parameters:
+        - $ref: '#/components/parameters/CredentialId'
+      responses:
+        '200':
+          description: The credential
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'     
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /credentials/{id}/revocations:
+    post:
+      summary: Request revocation (Registrar A). Status becomes PENDING
+      parameters:
+        - $ref: '#/components/parameters/CredentialId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevocationRequest'
+      responses:
+        '201':
+          description: Revocation request created (PENDING)
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevocationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'       
+
+  /revocations/{revocationId}/approvals:
+    post:
+      summary: Approve a revocation (Registrar B). Credential is then revoked
+      parameters:
+        - name: revocationId
+          in: path
+          required: true           
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Approved, credential revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevocationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'      
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'      
+
+  /credentials/{id}/share-links:
+    post:
+      summary: Create expiring share link and QR (Graduate)
+      parameters:
+        - $ref: '#/components/parameters/CredentialId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareLinkRequest'
+      responses:
+        '201':
+          description: Share link created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareLinkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /verify/{token}:
+    get:                          
+      summary: Verify a credential by share token (Verifier)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'      
+
+  /audit-events:
+    get:
+      summary: List audit events (Auditor)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: A page of audit events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:                         
+  securitySchemes:
+    cookieAuth:
+      type: apiKey                
+      in: cookie                    
+      name: access_token           
+
+  parameters:
+    CredentialId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0                 
+        default: 0
+    Size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100               
+        default: 20
+
+  responses:                       
+    BadRequest:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Unauthorized:
+      description: Not logged in
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Forbidden:
+      description: Logged in but wrong role
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    NotFound:
+      description: Resource does not exist
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Conflict:
+      description: Invalid state, e.g. already revoked
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+  schemas:                          
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    CredentialRequest:
+      type: object
+      required: [graduateId, programme, awardDate]   
+      properties:
+        graduateId:
+          type: string
+        programme:
+          type: string
+          maxLength: 120                              
+        awardDate:
+          type: string
+          format: date                              
+    CredentialResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        graduateId:
+          type: string
+        programme:
+          type: string
+        awardDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ACTIVE, REVOKED]                    
+    CredentialPage:
+      type: object
+      properties:
+        content:                                     
+          type: array
+          items:
+            $ref: '#/components/schemas/CredentialResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+    RevocationRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+    RevocationResponse:
+      type: object
+      properties:
+        revocationId:
+          type: string
+        credentialId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED]
+    ShareLinkRequest:
+      type: object
+      required: [expiresInHours]
+      properties:
+        expiresInHours:
+          type: integer
+          minimum: 1
+          maximum: 720                               
+    ShareLinkResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        url:
+          type: string
+        qrCode:
+          type: string                               
+        expiresAt:
+          type: string
+          format: date-time
+    VerificationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        status:
+          type: string
+          enum: [ACTIVE, REVOKED, EXPIRED]
+        programme:
+          type: string
+        awardDate:
+          type: string
+          format: date
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        actor:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    AuditEventPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+    ProblemDetail:                                   
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errors:                                     
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
